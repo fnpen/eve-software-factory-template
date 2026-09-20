@@ -65,6 +65,18 @@ pnpm dev
 
 Hand the agent a task ("users report the password reset email arrives twice, fix it") and watch the four stations fire in order, ending in a draft PR on `FACTORY_REPO`. Local runs are treated as untrusted, so changes to GitHub wait for your approval in the TUI.
 
+## Hello world CLI
+
+The standalone TypeScript greeting runs directly with Node.js 24.x or Bun, without a build, dependency installation, network access, credentials, or factory configuration. To run all commands below, install Node.js 24.x, Bun (available on `PATH`), and pnpm:
+
+```bash
+bun run hello
+pnpm run hello:node
+pnpm run test:cli
+```
+
+Both greeting commands print `Hello, world!` followed by a newline. You can also run the entry directly with `bun run index.mts` or `node index.mts`. The tests check both runtimes and fail if Bun is missing; pnpm remains the package manager for the factory app.
+
 ## Resources
 
 - [Foreman Docs](https://ask-foreman.dev/docs)
