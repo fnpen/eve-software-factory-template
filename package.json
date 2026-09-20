@@ -15,7 +15,10 @@
     "dev": "eve dev",
     "eval": "eve eval",
     "fix": "ultracite fix",
+    "hello": "bun run index.mts",
+    "hello:node": "node index.mts",
     "start": "eve start",
+    "test:cli": "node --test cli.test.mts",
     "typecheck": "tsc",
     "validate": "pnpm run check && pnpm run typecheck && eve info"
   },
