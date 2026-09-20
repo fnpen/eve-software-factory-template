@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "find-docs": {
+      "source": "upstash/context7",
+      "sourceType": "github",
+      "skillPath": "skills/find-docs/SKILL.md",
+      "computedHash": "93ec2d2786d7e83973252383875c4f345a2ee7cbbd08a1ab38e5201b214640ee"
+    },
+    "tavily-cli": {
+      "source": "tavily-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/tavily-cli/SKILL.md",
+      "computedHash": "2fa20b1db8770f38166711db92189c6b0e5ece65e145f662529690816e0b3ed0"
+    },
+    "tavily-extract": {
+      "source": "tavily-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/tavily-extract/SKILL.md",
+      "computedHash": "5b3005d176086d58d8bcd56c9dde78e2fcca7b188bb39762c17cd32131095786"
+    },
+    "tavily-search": {
+      "source": "tavily-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/tavily-search/SKILL.md",
+      "computedHash": "0e60c0488b004dd7b5a01fc19a36e52ffd8e763b409dc6c2e3c0aa6681182629"
+    }
+  }
+}

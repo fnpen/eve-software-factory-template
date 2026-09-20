@@ -1,0 +1,92 @@
+{
+  "skill_name": "mastery-path",
+  "evals": [
+    {
+      "id": 1,
+      "name": "beginner-start",
+      "prompt": "Teach me HTTP caching from the beginning. I want practical backend knowledge and eventually senior-level interview practice. Save my progress in {{progress_file}}. Start with one manageable lesson. You have no web access in this exercise, so do not claim you checked current resources.",
+      "expected_output": "A concise beginner lesson and one three-choice assessment, with a new unchecked roadmap and resumable pending question in the requested Markdown file; no invented resource links.",
+      "files": [],
+      "expectations": [
+        "Presents exactly one three-choice assessment ending with '3. Explain this case.'",
+        "Keeps the teaching/review portion within five short paragraphs.",
+        "Saves the same pending question and choice order shown to the learner.",
+        "Starts with beginner HTTP caching fundamentals and a practical example.",
+        "Leaves the new roadmap unchecked rather than claiming unobserved understanding.",
+        "Does not invent verified resource links while offline."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "explain-without-completion",
+      "prompt": "Resume my training from {{progress_file}}. My answer to the saved question is 3 — Explain this case. I do not understand where the missing increment went. Please use a small worked example.",
+      "expected_output": "Explains the lost update, records assistance without completing the topic, preserves personal content, and saves a fresh three-choice check on the same concept.",
+      "files": [
+        "evals/files/explain-progress.md"
+      ],
+      "expectations": [
+        "Presents exactly one three-choice assessment ending with '3. Explain this case.'",
+        "Keeps the teaching/review portion within five short paragraphs.",
+        "Saves the same pending question and choice order shown to the learner.",
+        "Preserves all personal content outside the managed training block.",
+        "Explains how both writes of 11 lose an increment using a worked example.",
+        "Leaves Lost updates unchecked and logs assistance rather than independent success.",
+        "Presents a fresh lost-update application instead of retesting the solved case verbatim."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "continue-pending-senior",
+      "prompt": "Continue my training from {{progress_file}}. I have not answered the saved question yet. Give me a short cheat sheet to get back into the topic, and do not restart at beginner level.",
+      "expected_output": "Restores the exact senior-level question and option order, provides a short non-spoiling recap/cheat sheet and next focus, requests brief reasoning, and does not invent an attempt or completion.",
+      "files": [
+        "evals/files/resume-progress.md"
+      ],
+      "expectations": [
+        "Presents exactly one three-choice assessment ending with '3. Explain this case.'",
+        "Keeps the teaching/review portion within five short paragraphs.",
+        "Saves the same pending question and choice order shown to the learner.",
+        "Preserves all personal content outside the managed training block.",
+        "Restores the exact saved senior-level question and option order without restarting.",
+        "Provides a non-spoiling cheat sheet and a recommended next focus.",
+        "Requests brief reasoning without recording an invented attempt or completion."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "correct-choice-wrong-reason",
+      "prompt": "Resume from {{progress_file}}. I choose 1. My reasoning is that a single UPDATE locks every table in the database, so no other transaction can run anywhere until it finishes. I think this completes atomic increments; continue.",
+      "expected_output": "Rejects the global-lock misconception despite the correct choice, leaves atomic increments unchecked, records the gap, and gives a focused follow-up rather than advancing on false mastery.",
+      "files": [
+        "evals/files/misconception-progress.md"
+      ],
+      "expectations": [
+        "Presents exactly one three-choice assessment ending with '3. Explain this case.'",
+        "Keeps the teaching/review portion within five short paragraphs.",
+        "Saves the same pending question and choice order shown to the learner.",
+        "Preserves all personal content outside the managed training block.",
+        "Corrects the claim that a single atomic update locks every table.",
+        "Leaves Atomic increments unchecked and records the flawed reasoning.",
+        "Keeps follow-up practice focused on the misconception and requests reasoning."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "evidence-based-completion",
+      "prompt": "Resume from {{progress_file}}. I choose 2: the first committed update changes 20 to 23, and the second applies to that current value and changes it to 26. Each update is atomic for this row; it does not imply that unrelated tables are locked. Continue.",
+      "expected_output": "Recognizes the second separated unassisted application with sound advanced reasoning, checks off atomic increments, preserves other checklist states and personal notes, and saves one next three-choice question.",
+      "files": [
+        "evals/files/completion-progress.md"
+      ],
+      "expectations": [
+        "Presents exactly one three-choice assessment ending with '3. Explain this case.'",
+        "Keeps the teaching/review portion within five short paragraphs.",
+        "Saves the same pending question and choice order shown to the learner.",
+        "Preserves all personal content outside the managed training block.",
+        "Checks Atomic increments after the second separated unassisted application.",
+        "Records the actual reasoning and preserves unrelated roadmap completion states.",
+        "Advances to a relevant next challenge with brief reasoning, without certifying workplace seniority."
+      ]
+    }
+  ]
+}

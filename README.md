@@ -34,7 +34,7 @@ Each station is its own agent with its own instructions, sandbox, and tools. The
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-title=eve+Software+Factory&demo-description=Software+factory+built+on+eve%3A+AI+agents+work+each+stage+of+the+development+loop%2C+and+people+make+the+judgment+calls.&project-name=eve-software-factory&repository-name=eve-software-factory-template&repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Feve-software-factory-template&env=FACTORY_REPO%2CFACTORY_LABEL&envDefaults=%7B%22FACTORY_LABEL%22%3A%22factory%22%7D&envDescription=FACTORY_REPO+is+the+owner%2Frepo+the+factory+works+on.+FACTORY_LABEL+is+the+issue+label+that+hands+an+issue+to+the+factory%3B+the+default+label+is+fine.&connect=%5B%7B%22type%22%3A%22github%22%2C%22env%22%3A%22GITHUB_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Fgithub%22%7D%2C%7B%22type%22%3A%22linear%22%2C%22env%22%3A%22LINEAR_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Flinear%22%7D%5D&stores=%5B%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22public%22%7D%5D&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F45PVqbeL5egwsqBRpGt6SQ%2F99e9f270dc22e07f499236af3a11a190%2Fimage.png&redirect-url=https%3A%2F%2Fask-foreman.dev%2Fwelcome)
 
-The Vercel deploy flow sets up everything: the **GitHub** connector, **Linear** connector, **Vercel Blob** store, and a prompt for the `FACTORY_REPO` and `FACTORY_LABEL` environment variables.
+The Vercel deploy flow sets up the GitHub connector, Linear connector, Vercel Blob store, and a prompt for the `FACTORY_REPO` and `FACTORY_LABEL` environment variables. Model calls require a separately configured LiteLLM proxy and virtual key.
 
 Two things must line up before the first deployment can finish. `FACTORY_REPO` must name a real repository in `owner/repo` format, and the GitHub App behind the connector you select must be installed with access to that repository. The deployment clones `FACTORY_REPO` up front to prewarm the station sandboxes, so a repository the app cannot reach fails the deploy with a `Cannot access <owner/repo>` error; install the app on the repository (or fix the value), then redeploy.
 
@@ -48,10 +48,14 @@ Configuration (see `.env.example`):
 | `FACTORY_BRANCH_PREFIX` | No | `factory/` | Branch prefix marking the factory's own PRs, which are the only branches automated CI fixes touch |
 | `FACTORY_BOT_NAME` | No | the GitHub App's slug | The `@mention` name, resolved from the connector automatically when unset |
 | `GITHUB_CONNECTOR` / `LINEAR_CONNECTOR` | Yes | — | Set automatically from Vercel Connect connector UIDs |
+| `LITELLM_BASE_URL` | For model calls | None | OpenAI-compatible proxy base URL including `/v1`; must expose `gpt-6-astra` and `kimi-k3` aliases |
+| `LITELLM_API_KEY` | For model calls | None | Restricted LiteLLM virtual key; keep it in local or deployment environment settings |
+ 
+The active profile uses Astra at medium effort for classification and orchestration, Astra at high effort for research, analysis, and implementation, and Kimi K3 with provider-default reasoning for independent review. Configure the proxy's Astra alias to use a Codex-authenticated backend and its Kimi alias to use OpenCode Go. There is no automatic Vercel Gateway fallback. See [model suggestions and routing setup](./MODELS-SUGGESTION.md) for both saved profiles, optional Fable 5.1 review, session-header forwarding, and the separate eval judge.
 
 ## Local development
 
-Link the project you deployed (or a fresh one), pull its environment, and start the TUI:
+Link the project you deployed (or a fresh one), pull its environment, add `LITELLM_BASE_URL` and `LITELLM_API_KEY` to `.env.local`, and start the TUI:
 
 ```bash
 vercel link

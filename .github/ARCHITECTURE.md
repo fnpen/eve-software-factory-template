@@ -7,7 +7,7 @@ A map of how this agent is put together, for humans and AI agents working in the
 - **Name:** eve Software Factory
 - **Maintainer:** Vercel Labs (Ben Sabic)
 - **License:** MIT
-- **Last updated:** 2026-08-18
+- **Last updated:** 2026-09-18
 
 ## Overview
 
@@ -46,6 +46,7 @@ agent/
     read_artifact.ts          # Blob: read a handoff artifact by id (read-only, open to every run)
   lib/
     constants.ts            # requireEnv + FACTORY_REPO/factoryRepo/FACTORY_LABEL + linearAuth
+    models.ts               # LiteLLM-backed dynamic model selections: Astra for the main pipeline, Kimi K3 for independent review; runtime credentials and per-session identity
     trust.ts                # the single trust authority: AUTONOMOUS_PRINCIPAL, isAutonomous, isTrusted, isScheduleAppAuth, stampTrusted
     blob.ts                 # the shared Blob layer: reserved-namespace registry (all prefixes + guards) and read/write/delete document helpers
     user-preferences.ts     # principal-scoped Blob key derivation
@@ -73,7 +74,7 @@ evals/                      # eve eval runner suite: smoke, routing/, safety/, p
 | Route auth | `agent/channels/eve.ts` | Channel | Inbound auth for the eve route; the `localDevUser` shim upgrades the dev principal to a user so user-scoped features work in the dev TUI |
 | GitHub tools | `agent/extensions/github.ts` | Extension | The orchestrator's GitHub surface as `github__*` tools: reads, triage writes, PR authoring; an explicit allowlist (no preset, no merge tools) with approval predicates doubling as the authorization policy |
 | Trust authority | `agent/lib/trust.ts` | Library | The only place caller trust is defined: trusted (stamped at dispatch), autonomous (label intake), schedule app auth; new capabilities gate on these predicates rather than inventing their own checks |
-| classifier | `agent/subagents/classifier/` | Subagent | Task-mode triage on a fast model; returns type/priority/complexity/area/actionable/needs_clarification |
+| classifier | `agent/subagents/classifier/` | Subagent | Task-mode triage on Astra with medium reasoning; returns type/priority/complexity/area/actionable/needs_clarification |
 | analyst | `agent/subagents/analyst/` | Subagent | Task-mode planning against its own repo checkout; returns problem statement, approach, plan, risks, acceptance criteria, test strategy |
 | implementer | `agent/subagents/implementer/` | Subagent | Task-mode implementation in its own checkout: branch, code, run the repo's checks, commit, `push_branch`; returns branch + change summary + verification |
 | reviewer | `agent/subagents/reviewer/` | Subagent | Task-mode independent review on a different vendor: `checkout_branch`, read the real diff, judge each acceptance criterion; returns approve/request_changes/reject |
@@ -112,15 +113,17 @@ There is no application database. Anything that must outlive a session (for exam
 | GitHub | Label intake, mentions, and PR events in; comments, branches, and draft PRs out | eve GitHub channel + `@github-tools/eve-extension`, both via Vercel Connect (`GITHUB_CONNECTOR`); station git via firewall-brokered installation tokens |
 | Linear (channel + MCP) | Agent Sessions in; issue creation, comments, cross-references out | eve Linear channel via Connect; MCP connection to `mcp.linear.app` with app-scoped auth shared through `linearAuth` (`LINEAR_CONNECTOR`) |
 | Vercel Blob | Per-user preference storage, the shared factory brain, and station handoff artifacts | `@vercel/blob`, OIDC-authenticated |
-| Vercel AI Gateway | Model access for the root and every station | Gateway model ids; the root model in `agent/agent.ts`, per-station models in each station's `agent.ts` (the reviewer deliberately runs a different vendor) |
+| LiteLLM | Model access for the root and every station | OpenAI-compatible Chat Completions through `agent/lib/models.ts`; `gpt-6-astra` must route to the Codex-authenticated backend and `kimi-k3` to OpenCode Go. Runtime-only virtual key, session headers, explicit context windows, and no gateway fallback |
+| Vercel AI Gateway | Eval judge only | The existing judge model in `evals/evals.config.ts`; separate access and billing from the station subscriptions |
 | Vercel Sandbox | Isolated runtimes: root checkout + three station clones | `agent/sandbox.ts` and `agent/subagents/*/sandbox.ts` (`vercel()` backend, shared builders in `agent/lib/github/repo-sandbox.ts`) |
 
 ## Deployment & infrastructure
 
 - **Platform:** Vercel. Deploy with `eve deploy` (wraps `vercel deploy --prod`; the raw command cannot auto-detect the eve framework).
 - **Connectors:** provisioned via `vercel connect create` + `attach`; the GitHub trigger points at `/eve/v1/github` (subscribe to `issues`, `issue_comment`, `pull_request_review_comment`, `pull_request`, and `check_suite`) and the Linear trigger at `/eve/v1/linear` (AgentSessionEvent). The GitHub App installation needs write access to contents, issues, and pull requests on `FACTORY_REPO`.
-- **Environment:** connector UIDs `GITHUB_CONNECTOR` and `LINEAR_CONNECTOR`; `FACTORY_REPO` (required at module load; a missing value fails discovery); optional `FACTORY_SETUP_COMMAND` (runs inside the clone at template build). The model and Blob authenticate via the project's OIDC token.
+- **Environment:** connector UIDs `GITHUB_CONNECTOR` and `LINEAR_CONNECTOR`; `FACTORY_REPO` (required at module load; a missing value fails discovery); optional `FACTORY_SETUP_COMMAND` (runs inside the clone at template build). Models require `LITELLM_BASE_URL` and `LITELLM_API_KEY` at runtime. Blob authenticates via the project's OIDC token.
 - **Local development:** `pnpm dev` runs the same runtime in a TUI; `vercel env pull` supplies a short-lived OIDC token (needed for Connect and the station sandboxes). The webhook surfaces run against a deployment. The dev principal is untrusted by design, so approval cards surface in the TUI.
+- **Model settings:** classifier and orchestrator use Astra with `medium` reasoning; researcher, analyst, and implementer use Astra with `high`; reviewer uses Kimi K3 with `provider-default`. Credentials and live provider instances resolve at `step.started` rather than entering the compiled manifest. The proxy must preserve `reasoning_effort`, Kimi's `reasoning_content`, the agent User-Agent, and per-session `x-opencode-session` headers. See [`MODELS-SUGGESTION.md`](../MODELS-SUGGESTION.md).
 
 ## Security considerations
 
@@ -167,4 +170,4 @@ There is no application database. Anything that must outlive a session (for exam
 - **Task mode:** a child session that must run to completion and return structured output; it cannot ask questions or wait on approval.
 - **Autonomous principal:** the constructed identity (`github:foreman-factory`) unattended label-intake runs execute under, carrying the intake issue number as an auth attribute; approval policies deny it everything except labels, comments on that one issue, closing or reopening issues, and draft PRs.
 - **Vercel Connect:** brokers OAuth/credentials for GitHub and Linear; connectors are identified by a UID.
-- **OIDC:** the project's Vercel identity token, used to authenticate Blob (and AI Gateway) without static keys.
+- **OIDC:** the project's Vercel identity token, used to authenticate Blob and, when configured, the separate AI Gateway eval judge without static keys.

@@ -5,10 +5,9 @@ import { MODELS } from "../../lib/models.js";
  * Station 1: triage.
  *
  * @remarks
- * Runs on a fast, cheap model because classification is a shaping step, not
- * an analysis step. The station receives only text (the work item plus any
- * thread context the orchestrator packs into `message`) and returns the
- * structured classification the rest of the pipeline routes on.
+ * Classification is a shaping step, not an analysis step. The station receives
+ * only text (the work item plus any thread context the orchestrator packs into
+ * `message`) and returns the structured classification the pipeline routes on.
  * `needs_clarification` is the pipeline's stop signal; the orchestrator asks
  * the human instead of proceeding on guesses.
  */
@@ -72,4 +71,5 @@ export default defineAgent({
     ],
     type: "object",
   },
+  reasoning: "medium",
 });

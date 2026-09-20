@@ -96,4 +96,5 @@ export default defineAgent({
     ],
     type: "object",
   },
+  reasoning: "high",
 });

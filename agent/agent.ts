@@ -20,4 +20,5 @@ export default defineAgent({
     maxOutputTokensPerSession: 100_000,
   },
   model: MODELS.orchestrator,
+  reasoning: "medium",
 });

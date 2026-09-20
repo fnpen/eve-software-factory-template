@@ -97,4 +97,5 @@ export default defineAgent({
     required: ["summary", "findings", "gaps", "artifact_id"],
     type: "object",
   },
+  reasoning: "high",
 });
