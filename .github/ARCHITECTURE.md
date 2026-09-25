@@ -113,8 +113,7 @@ There is no application database. Anything that must outlive a session (for exam
 | GitHub | Label intake, mentions, and PR events in; comments, branches, and draft PRs out | eve GitHub channel + `@github-tools/eve-extension`, both via Vercel Connect (`GITHUB_CONNECTOR`); station git via firewall-brokered installation tokens |
 | Linear (channel + MCP) | Agent Sessions in; issue creation, comments, cross-references out | eve Linear channel via Connect; MCP connection to `mcp.linear.app` with app-scoped auth shared through `linearAuth` (`LINEAR_CONNECTOR`) |
 | Vercel Blob | Per-user preference storage, the shared factory brain, and station handoff artifacts | `@vercel/blob`, OIDC-authenticated |
-| LiteLLM | Model access for the root and every station | OpenAI-compatible Chat Completions through `agent/lib/models.ts`; `gpt-6-astra` must route to the Codex-authenticated backend and `kimi-k3` to OpenCode Go. Runtime-only virtual key, session headers, explicit context windows, and no gateway fallback |
-| Vercel AI Gateway | Eval judge only | The existing judge model in `evals/evals.config.ts`; separate access and billing from the station subscriptions |
+| LiteLLM | Model access for the root, every station, the eval judge, and the standalone example | OpenAI-compatible Chat Completions; `gpt-6-astra` must route to the Codex-authenticated backend and `kimi-k3` to OpenCode Go. The judge uses Kimi and `index.mts` uses Astra. Runtime-only virtual key and no gateway fallback |
 | Vercel Sandbox | Isolated runtimes: root checkout + three station clones | `agent/sandbox.ts` and `agent/subagents/*/sandbox.ts` (`vercel()` backend, shared builders in `agent/lib/github/repo-sandbox.ts`) |
 
 ## Deployment & infrastructure
@@ -170,4 +169,4 @@ There is no application database. Anything that must outlive a session (for exam
 - **Task mode:** a child session that must run to completion and return structured output; it cannot ask questions or wait on approval.
 - **Autonomous principal:** the constructed identity (`github:foreman-factory`) unattended label-intake runs execute under, carrying the intake issue number as an auth attribute; approval policies deny it everything except labels, comments on that one issue, closing or reopening issues, and draft PRs.
 - **Vercel Connect:** brokers OAuth/credentials for GitHub and Linear; connectors are identified by a UID.
-- **OIDC:** the project's Vercel identity token, used to authenticate Blob and, when configured, the separate AI Gateway eval judge without static keys.
+- **OIDC:** the project's Vercel identity token, used to authenticate Vercel services such as Blob; model calls authenticate separately through LiteLLM.

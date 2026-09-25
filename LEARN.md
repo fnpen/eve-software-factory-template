@@ -8,7 +8,7 @@
 - Current level: beginner; one correct unassisted orchestration application.
 - Updated: 2026-09-20
 - Context: Learner reports deploying the linked template on Vercel. Local source and the official guide were inspected; deployed configuration and runtime have not been inspected.
-- Next focus: Writing actionable feature requests after GitHub intake practice; then revisit orchestration with a separated transfer case.
+- Next focus: Reinforce label-triggered intake with a simpler case after the requested explanation; then teach actionable feature requests and later revisit orchestration.
 
 ## Roadmap
 
@@ -36,22 +36,23 @@ Completion requires two correct unassisted applications in different scenarios, 
 | Date | Concept / scenario | Learner response and reasoning | Outcome / assistance | Completion or review decision |
 | --- | --- | --- | --- | --- |
 | 2026-09-20 | Orchestration / small CSV export needing planning and independent review | Chose 2; no rationale requested at beginner level | Correct, unassisted | One observation; incomplete pending a separated transfer application |
+| 2026-09-20 | GitHub intake / triage-authorized unattended bug handoff | Chose 3, requesting explanation | Assisted walkthrough; neither failure nor independent success | Intake remains incomplete; fresh simpler checkpoint |
 
 ## Weak areas and review
 
-No assessed gaps yet. Deployed environment values, connector setup, and runtime health remain unverified, not learner misconceptions.
+GitHub label intake needs independent practice after an explanation request; no incorrect answer or specific misconception demonstrated. Deployed environment values, connector setup, and runtime health remain unverified, not learner misconceptions.
 
 ## Checkpoint
 
 - Status: awaiting-answer
 - Concept: Choosing unattended GitHub label intake.
 - Difficulty: beginner
-- Assistance: none; introductory review only.
+- Assistance: fresh case follows an answer-revealing walkthrough of label intake; count immediate success as assisted practice, not independent mastery.
 
-**Question:** Your GitHub connector is working, the intake label is the default `factory`, and you have repository triage permission. A bug issue contains clear reproduction steps and acceptance criteria. You want to hand it off without an interactive conversation. What should you do?
+**Question:** You own the target repository, its connector works, and its intake label is `factory`. You create a complete issue titled “Fix the broken help-page link” but leave it unlabeled and do not mention the bot. How should you start an unattended run?
 
-1. Apply the `factory` label to the issue to trigger unattended intake.
-2. Post a comment saying `@implementer fix this`, treating the station name as a separate GitHub bot.
+1. Wait for Foreman to scan every open issue automatically; creating the issue is enough.
+2. Apply the `factory` label to hand this issue to Foreman.
 3. Explain this case.
 
 ## Cheat sheet

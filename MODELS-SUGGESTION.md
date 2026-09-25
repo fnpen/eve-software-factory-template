@@ -50,7 +50,7 @@ Function tools always carry an explicit boolean `strict`: missing values default
 
 Model credentials are read when a model step starts. Missing credentials fail the turn before any provider request; discovery does not need them. There is no Vercel Gateway or OpenAI API fallback. Context windows are declared explicitly for Astra (1,050,000 tokens) and Kimi K3 (1,048,576 tokens), so eve does not need a Vercel catalog lookup for these proxy aliases.
 
-The eval judge in `evals/evals.config.ts` is separate and remains on its existing Vercel Gateway model. Running judge-backed evals can therefore require separate gateway access.
+The eval judge in `evals/evals.config.ts` also uses LiteLLM, with the `kimi-k3` alias. The standalone `index.mts` example uses `gpt-6-astra`. Both require `LITELLM_BASE_URL` and `LITELLM_API_KEY`; the virtual key must permit both aliases. Run the example with `node --env-file=.env.local index.mts`. Neither entrypoint requires AI Gateway credentials.
 
 During local verification, eve 0.39.3 displayed an "AI Gateway credentials missing" setup banner for these dynamic models, but the submitted turn correctly resolved through the LiteLLM handler. A `MODEL_SELECTION_FAILED` error naming `LITELLM_API_KEY` or `LITELLM_BASE_URL` means those runtime variables are missing; replacing the model through `/model` is not the fix.
 
