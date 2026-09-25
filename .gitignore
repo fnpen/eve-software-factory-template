@@ -9,3 +9,7 @@ node_modules
 dist
 .DS_Store
 *.tsbuildinfo
+/.swc
+/app/.well-known/workflow/
+/.workflow-data/
+/next-env.d.ts

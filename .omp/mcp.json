@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+  "mcpServers": {
+    "chrome-playwright": {
+      "type": "http",
+      "url": "https://chrome-local-mcp-playwright.ilya.win/mcp",
+      "headers": { "Authorization": "${CHROME_MCP_AUTHORIZATION}" },
+      "timeout": 120000,
+      "enabled": false
+    },
+    "chrome-devtools": {
+      "type": "http",
+      "url": "https://chrome-local-mcp-devtools.ilya.win/mcp",
+      "headers": { "Authorization": "${CHROME_MCP_AUTHORIZATION}" },
+      "timeout": 120000,
+      "enabled": false
+    }
+  }
+}

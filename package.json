@@ -10,27 +10,41 @@
     "#evals/*": "./evals/*"
   },
   "scripts": {
+    "a2a:build": "next build --webpack",
+    "a2a:dev": "next dev --webpack",
+    "a2a:start": "next start",
     "build": "eve build",
     "check": "ultracite check",
     "dev": "eve dev",
     "eval": "eve eval",
     "fix": "ultracite fix",
     "start": "eve start",
+    "test:a2a": "tsx --test tests/*.test.ts",
     "typecheck": "tsc",
     "validate": "pnpm run check && pnpm run typecheck && eve info"
   },
   "dependencies": {
+    "@a2a-js/sdk": "1.2.1",
     "@ai-sdk/openai-compatible": "3.0.36",
     "@github-tools/eve-extension": "^0.3.2",
     "@vercel/blob": "^2.8.0",
     "@vercel/connect": "0.8.0",
+    "@vercel/sandbox": "3.5.0",
     "ai": "^7.0.107",
+    "ajv": "^8.20.0",
     "eve": "^0.39.3",
+    "next": "16.3.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "workflow": "5.0.0-beta.56",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.9",
     "@types/node": "~24.13.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tsx": "^4.23.15",
     "typescript": "7.0.2",
     "ultracite": "^7.10.5"
   },

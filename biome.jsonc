@@ -1,6 +1,14 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["ultracite/biome/core"],
+  "overrides": [
+    {
+      // eve discovers these entry points by path. Each forwards one definition,
+      // rather than collecting unrelated modules into a barrel.
+      "includes": ["agent/**/*.ts", "!agent/lib/**"],
+      "linter": { "rules": { "performance": { "noBarrelFile": "off" } } }
+    }
+  ],
   "linter": {
     "rules": {
       "style": {

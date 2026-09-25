@@ -73,7 +73,7 @@ export const FACTORY_LABEL = process.env.FACTORY_LABEL ?? "factory";
  * channel uses the prefix to recognize the factory's own pull requests, so
  * the red-CI fix loop never runs on branches people pushed. The implementer's
  * instructions carry the default prefix as prose, so an override should keep
- * them in sync (`agent/subagents/implementer/instructions.md`).
+ * them in sync (`agents/implementer/instructions.md`).
  */
 export const FACTORY_BRANCH_PREFIX =
   process.env.FACTORY_BRANCH_PREFIX ?? "factory/";

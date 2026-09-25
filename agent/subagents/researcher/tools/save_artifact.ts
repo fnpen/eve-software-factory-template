@@ -1,3 +1,1 @@
-import { saveArtifactTool } from "../../../lib/artifacts/tools.js";
-
-export default saveArtifactTool();
+export { default } from "../../../../agents/researcher/tools/save_artifact.js";

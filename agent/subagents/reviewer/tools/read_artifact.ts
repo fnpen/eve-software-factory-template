@@ -1,3 +1,1 @@
-import { readArtifactTool } from "../../../lib/artifacts/tools.js";
-
-export default readArtifactTool();
+export { default } from "../../../../agents/reviewer/tools/read_artifact.js";

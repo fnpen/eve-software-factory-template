@@ -13,14 +13,25 @@ A map of how this agent is put together, for humans and AI agents working in the
 
 This is a software factory built on the [eve](https://eve.dev) agent framework: the root agent is an orchestrator that takes work items from GitHub (an issue labeled `factory`, or an @Foreman mention) and Linear (Agent Sessions), and moves each through four stations, each a declared subagent with its own instructions, sandbox, and tool surface: **classifier** (triage), **analyst** (plan with acceptance criteria, grounded in a repo checkout), **implementer** (executes the plan in its own checkout, runs the repo's checks, pushes a feature branch), and **reviewer** (independent verdict on the pushed branch, different model vendor, up to 2 revision cycles). The finished product is a draft pull request on `FACTORY_REPO`. People stay in the loop where judgment lives: marking a PR ready stops the session to request approval, merging isn't in the tool surface at all, and unattended runs are denied everything except labels, progress comments on their own intake issue, closing or reopening issues, and draft PRs. Closing an issue runs ungated for every caller: it is reversible triage, and a reopen undoes it. The agent runs on Vercel, the same way locally (`eve dev`) and in production (`eve deploy`).
 
-eve discovers every capability from the filesystem under `agent/`. There is no central registry or wiring file: a tool's name is its filename, a subagent's name is its directory, an extension's namespace is its filename.
+Each agent owns its definitions in `agents/<role>/`. eve discovers thin adapters under `agent/`: a tool's name is its filename, a subagent's name is its directory, and an extension's namespace is its filename. The A2A runtime uses the explicit catalog in `agents/registry.ts`, importing the same station contracts and prompts without loading eve agent configurations.
 
 ## Project structure
 
 ```text
-agent/
+agents/
+  registry.ts               # explicit catalog, role types and A2A route validation
+  contracts.ts              # station/orchestrator definition types
+  task-input.ts             # shared strict task envelope
+  instructions.ts           # shared station Markdown loader
+  foreman/                  # definition.ts, agent.ts, instructions.ts, pipeline.ts; tools, sandbox, channels, connections, extensions and skills
+  classifier/               # definition.ts, agent.ts and instructions.md
+  researcher/               # definition.ts, agent.ts, instructions.md and tools
+  analyst/                  # definition.ts, agent.ts, instructions.md, sandbox.ts and tools
+  implementer/              # definition.ts, agent.ts, instructions.md, sandbox.ts and tools
+  reviewer/                 # definition.ts, agent.ts, instructions.md, sandbox.ts and tools
+agent/                      # eve discovery adapters; implementations live under agents/<role>/
   agent.ts                  # model configuration (defineAgent): compaction + a session token budget sized for the whole pipeline
-  instructions.ts           # defineInstructions: the orchestrator prompt, resolved at build time (injects FACTORY_REPO)
+  instructions.ts           # forwards Foreman's build-time prompt (injects FACTORY_REPO)
   channels/
     github.ts               # eve GitHub channel via Vercel Connect; botName resolved from the connector's app slug; four hooks: onComment (mention, association-gated, stamps trusted), onIssue ('factory' label -> unattended pipeline under the autonomous principal), onCheckSuite (red CI on factory/* PRs -> unattended fix loop, capped at 2 attempts), onPullRequest (summary comment on opened PRs, bots skipped)
     linear.ts               # eve Linear channel via Connect; Agent Sessions; stamps trusted (workspace membership is the gate), injects requester name
@@ -31,11 +42,11 @@ agent/
     github.ts               # @github-tools/eve-extension mount: explicit include allowlist, FACTORY_REPO context, approval policies from lib/github/approval.ts; tools appear as github__<name>
   sandbox.ts                # root sandbox (Vercel Sandbox); the GitHub channel checks the triggering thread's ref out here
   subagents/
-    classifier/             # agent.ts (outputSchema) + instructions.md; text-only triage
-    analyst/                # agent.ts (outputSchema) + instructions.md + sandbox.ts (repo clone) + tools/{save,read}_artifact.ts; plans, never writes
-    implementer/            # agent.ts (outputSchema) + instructions.md + sandbox.ts + tools/checkout_branch.ts + tools/push_branch.ts + tools/read_artifact.ts
-    reviewer/               # agent.ts (different vendor, outputSchema) + instructions.md + sandbox.ts + tools/checkout_branch.ts + tools/read_artifact.ts
-    researcher/             # agent.ts + instructions.md + tools/save_artifact.ts; fresh-context web researcher
+    classifier/             # agent.ts + instructions.ts adapters; text-only triage
+    analyst/                # agent, instructions, sandbox and tool adapters; plans, never writes
+    implementer/            # agent, instructions, sandbox and tool adapters; can push a feature branch
+    reviewer/               # agent, instructions, sandbox and tool adapters; independent review
+    researcher/             # agent, instructions and save_artifact adapters; fresh-context research
   tools/
     agent.ts                # disableTool(): the built-in agent tool would let the root bypass its stations
     get_user_preferences.ts   # Blob: load this user's saved preferences
@@ -57,33 +68,53 @@ agent/
       approval.ts           # writePolicy / commentPolicy / labelPolicy / shipPolicy / closeIssuePolicy / createPullRequestPolicy / updateIssuePolicy / factoryBrainPolicy
       git-remote.ts         # validateBranch, brokerPolicy (firewall credential), mintInstallationToken, REMOTE_URL, REPO_DIR
       repo-sandbox.ts       # factoryBootstrap / factoryOnSession / factoryRevalidationKey shared by the three station sandboxes
-  skills/                   # load-on-demand procedures, routed by description frontmatter
-    writing-quality/        # AI-tells, plain English, prose specs
-    triaging-issues/        # grounding a GitHub work item: dedupe, repo-native labels, ask-or-proceed, repro requests
-    github-linear-bridging/ # bridged Linear issues: dedupe check, backlinks, team choice, two-way links
+  skills/                   # build-time adapters embed agents/foreman/skills packages and reference files
+    writing-quality.ts      # AI-tells, plain English, prose specs
+    triaging-issues.ts       # dedupe, repo-native labels, ask-or-proceed, repro requests
+    github-linear-bridging.ts # dedupe check, backlinks, team choice, two-way links
 evals/                      # eve eval runner suite: smoke, routing/, safety/, pipeline/ (opt-in real run), helpers.ts, evals.config.ts
 ```
+
+See [`agents/README.md`](../agents/README.md) for the per-agent contract, dependency boundaries, and extension checklist. Role-specific validation, reasoning and A2A capabilities belong in each `definition.ts`; the registry only composes them. Shared security and infrastructure stay in `agent/lib/`, not in any agent folder.
+
+## Call roles through the A2A server
+
+The Next.js server in `app/` exposes Foreman and five stations through the [Agent2Agent (A2A) protocol](https://a2a-protocol.org/). Each role has an endpoint, such as `/a2a/analyst`. These modules implement the entry point:
+
+| Module | Responsibility |
+| --- | --- |
+| `server/a2a.ts` | Adapts A2A 1.0 JSON-based remote procedure calls (JSON-RPC) to Workflow tasks |
+| `server/auth.ts` | Authenticates callers, checks write access with the shared trust predicate, and signs caller-bound and role-bound task identifiers |
+| `agents/registry.ts` | Composes role definitions for cards, route validation, input contracts and capabilities |
+| `agents/foreman/pipeline.ts` | Owns station order, handoffs, review revisions and draft-only delivery policy |
+| `server/workflow.ts` | Supplies durable station execution to the Foreman pipeline or a direct role call |
+| `server/steps.ts` | Isolates durable model and tool steps from the workflow virtual machine |
+| `server/stations.ts` | Calls models through the [Vercel AI SDK](https://ai-sdk.dev/docs/introduction) using existing station instructions and output schemas |
+| `server/tools.ts` | Runs commands in [Vercel Sandbox](https://vercel.com/docs/vercel-sandbox) with firewall-authenticated Git access |
+| `server/github.ts` | Creates draft pull requests only after reviewer approval |
+
+Deploy this entry point as a separate Next.js app. It doesn’t serve the existing eve scripts or GitHub and Linear integrations, or expose interactive approval and shipping tools. See the [A2A endpoint and configuration reference](../docs/A2A.md) for supported operations and migration limits.
 
 ## Core components
 
 | Component | Lives in | eve primitive | Responsibility |
 | --- | --- | --- | --- |
-| Orchestrator | `agent/agent.ts` + `instructions.ts` | Agent | Routes work items through the stations in order, verifies handoffs, runs the review loop (max 2 cycles), opens the draft PR, reports back; never writes code itself |
+| Orchestrator | `agents/foreman/` | Agent | Routes work items through the stations in order, verifies handoffs, runs the review loop (max 2 cycles), opens the draft PR, reports back; never writes code itself |
 | GitHub surface | `agent/channels/github.ts` | Channel | Intake and delivery: association-gated @Foreman mentions (stamped trusted), `factory`-label intake (rewritten to the autonomous principal, unattended framing injected), PR summary comments on opened PRs; replies render in-thread |
 | Linear surface | `agent/channels/linear.ts` | Channel | Linear Agent Sessions: users delegate issues to the factory; every session is stamped trusted (workspace membership); elicitations render natively |
 | Route auth | `agent/channels/eve.ts` | Channel | Inbound auth for the eve route; the `localDevUser` shim upgrades the dev principal to a user so user-scoped features work in the dev TUI |
 | GitHub tools | `agent/extensions/github.ts` | Extension | The orchestrator's GitHub surface as `github__*` tools: reads, triage writes, PR authoring; an explicit allowlist (no preset, no merge tools) with approval predicates doubling as the authorization policy |
 | Trust authority | `agent/lib/trust.ts` | Library | The only place caller trust is defined: trusted (stamped at dispatch), autonomous (label intake), schedule app auth; new capabilities gate on these predicates rather than inventing their own checks |
-| classifier | `agent/subagents/classifier/` | Subagent | Task-mode triage on Astra with medium reasoning; returns type/priority/complexity/area/actionable/needs_clarification |
-| analyst | `agent/subagents/analyst/` | Subagent | Task-mode planning against its own repo checkout; returns problem statement, approach, plan, risks, acceptance criteria, test strategy |
-| implementer | `agent/subagents/implementer/` | Subagent | Task-mode implementation in its own checkout: branch, code, run the repo's checks, commit, `push_branch`; returns branch + change summary + verification |
-| reviewer | `agent/subagents/reviewer/` | Subagent | Task-mode independent review on a different vendor: `checkout_branch`, read the real diff, judge each acceptance criterion; returns approve/request_changes/reject |
-| researcher | `agent/subagents/researcher/` | Subagent | Fresh-context web research for facts the repo and tracker don't hold; returns cited findings + gaps |
+| classifier | `agents/classifier/` | Subagent | Task-mode triage on Astra with medium reasoning; returns type/priority/complexity/area/actionable/needs_clarification |
+| analyst | `agents/analyst/` | Subagent | Task-mode planning against its own repo checkout; returns problem statement, approach, plan, risks, acceptance criteria, test strategy |
+| implementer | `agents/implementer/` | Subagent | Task-mode implementation in its own checkout: branch, code, run the repo's checks, commit, `push_branch`; returns branch + change summary + verification |
+| reviewer | `agents/reviewer/` | Subagent | Task-mode independent review on a different vendor: `checkout_branch`, read the real diff, judge each acceptance criterion; returns approve/request_changes/reject |
+| researcher | `agents/researcher/` | Subagent | Fresh-context web research for facts the repo and tracker don't hold; returns cited findings + gaps |
 | Linear access | `agent/connections/linear.ts` | Connection (MCP) | Create issues, comment, cross-reference; app-scoped auth via `linearAuth`; denied on unattended runs |
 | User preferences | `agent/tools/{get,save,clear}_user_preferences.ts` + `agent/lib/user-preferences.ts` | Tools | Per-user standing preferences in Blob, keyed to the resolved principal (never model input) |
 | Factory brain | `agent/tools/{read,update}_factory_brain.ts` + `agent/lib/factory-brain.ts` | Tools | Shared, durable notes about the target repository in Blob, keyed to `FACTORY_REPO` (never model input); reads open to every run, writes gated by `factoryBrainPolicy` (trusted-write) |
 | Handoff artifacts | `agent/lib/artifacts/` + per-station `tools/{save,read}_artifact.ts` + root `agent/tools/read_artifact.ts` | Tools | Long Markdown documents stations pass by id in Blob: researcher and analyst save, analyst/implementer/reviewer read, the orchestrator relays only the id; ids validated by an anchored pattern so they can't escape the reserved prefix |
-| Skills | `agent/skills/` | Skill | Load-on-demand procedures: `writing-quality`, `triaging-issues`, `github-linear-bridging` |
+| Skills | `agents/foreman/skills/` (adapters in `agent/skills/`) | Skill | Load-on-demand procedures: `writing-quality`, `triaging-issues`, `github-linear-bridging` |
 | Evals | `evals/` | Evals | eve eval runner: routing and safety assertions (deny-by-default over the write-tool list), an opt-in full-pipeline run |
 
 Channels and the connection are I/O boundaries. Tools run in the app runtime (full `process.env`); the station git tools run their commands inside the station's sandbox. Skills only add instructions to context. Every station runs in **task mode** (its `agent.ts` declares an `outputSchema`), which means it returns structured output and can not request approvals or input; that is a design constraint, not an accident (see Security considerations).

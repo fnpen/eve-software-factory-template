@@ -21,6 +21,18 @@ Foreman takes tasks from GitHub and Linear, moves each one through four stations
 
 Each station is its own agent with its own instructions, sandbox, and tools. The Reviewer sees only the pushed branch, never the Implementer's reasoning. Between runs, Foreman keeps a **factory brain**: notes about your repository that every run starts from. See [the pipeline](https://ask-foreman.dev/docs/pipeline) and [factory memory](https://ask-foreman.dev/docs/memory) for the full picture.
 
+## Call Foreman or a station through A2A
+
+Use the [Agent2Agent (A2A) protocol](https://a2a-protocol.org/) to call Foreman or an individual station in one Next.js deployment. Start the server with `pnpm a2a:dev`, then choose an endpoint from the [role endpoint reference](./docs/A2A.md#role-endpoints-and-supported-operations). Both entry points share station instructions, schemas, and model configuration.
+
+GitHub and Linear channels and interactive approvals remain in eve, not the A2A server. Read the [A2A authentication requirements and execution limits](./docs/A2A.md) before invoking `foreman` or `implementer`, which can push branches.
+
+## Agent structure
+
+Each agent has its own folder under [`agents/`](./agents/README.md): `foreman`, `classifier`, `researcher`, `analyst`, `implementer`, and `reviewer`. Each folder owns its definitions, instructions, and role-specific capabilities. Both runtimes consume the shared station contracts; `agent/` keeps eve's discovery adapters and `server/` keeps the A2A transport and execution code. Shared models, trust, Git guards, and storage helpers stay in `agent/lib/`.
+
+See the [agent extension guide](./agents/README.md#add-a-station) to add a station without adding role switches throughout the runtime.
+
 ## How work arrives
 
 - **Label an issue `factory`.** The pipeline runs on its own, posts progress as stations complete, and ends with a draft PR linked to the issue.

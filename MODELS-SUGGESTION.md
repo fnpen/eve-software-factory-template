@@ -28,7 +28,7 @@ Use Astra throughout the main pipeline, with medium effort for coordination and 
 | implementer | GPT-6 Astra (`gpt-6-astra`) | Codex Pro through the proxy | `high` |
 | reviewer | Kimi K3 (`kimi-k3`) | OpenCode Go through the proxy | `provider-default` |
 
-Models are assigned in `agent/lib/models.ts`. Reasoning is set in `agent/agent.ts` and each station's `agent.ts`. No automatic escalation or model fallback is configured.
+Models are assigned in `agent/lib/models.ts`. Reasoning is set in each `agents/<role>/definition.ts` and used by both runtimes. The eve adapters in `agents/<role>/agent.ts` select the centralized model assignments. No automatic escalation or model fallback is configured.
 
 - Consider `xhigh` for ambiguous architecture, concurrency or security changes, difficult debugging, or a failed revision.
 - Reserve Astra's provider-native `max` for a specific unresolved problem after `xhigh`. The installed eve version does not accept `max` in its top-level `reasoning` field; it needs a supported provider-specific configuration.
