@@ -2,6 +2,24 @@
 
 Guidance for AI coding agents working in this repository.
 
+## Required development skills
+
+Before making code changes, read and follow each applicable skill below, including any referenced guidance needed for the task. These skills are required for work within their scope, not optional suggestions.
+
+- [`architecture-patterns`](.agents/skills/architecture-patterns/SKILL.md): backend architecture, module boundaries, and architectural refactoring.
+- [`javascript-testing-patterns`](.agents/skills/javascript-testing-patterns/SKILL.md): JavaScript and TypeScript tests, testing infrastructure, and test-driven development.
+- [`modern-javascript-patterns`](.agents/skills/modern-javascript-patterns/SKILL.md): JavaScript and TypeScript implementation, refactoring, and modern language patterns.
+- [`nodejs-backend-patterns`](.agents/skills/nodejs-backend-patterns/SKILL.md): Node.js backend services, APIs, middleware, and error handling.
+- [`typescript-advanced-types`](.agents/skills/typescript-advanced-types/SKILL.md): advanced TypeScript types, reusable type utilities, and compile-time type safety.
+
+## Code style
+
+- Linting and formatting are handled by **Ultracite** (a Biome preset). Run `pnpm check` before finishing and `pnpm fix` to auto-fix. Config is in `biome.jsonc`; the kebab-case filename rule is disabled there because eve tools use snake_case names.
+- TypeScript strict; ESM with `NodeNext` resolution (relative imports need a `.js` extension). Prefer `const`, arrow functions, optional chaining / nullish coalescing.
+- Validate tool input/output with `zod` schemas.
+- Prose in markdown files is not hard-wrapped: write each paragraph or bullet as one line.
+- Agent-facing text (instructions, skill bodies, tool and subagent descriptions) follows the "How you write" rules in `agent/instructions.ts`: no em dashes, no machine-made words, no bold for emphasis. It carries behavior only, never framework plumbing (how approvals render, sign-in flows) or references to tools and skills the reading agent can't access — station instructions especially, since stations see none of the root's surface.
+
 ## Project overview
 
 The eve Software Factory template: Foreman, an orchestrator agent built on the [eve](https://eve.dev) framework that turns work items into reviewed draft pull requests on the configured repository (`FACTORY_REPO`). Work arrives from GitHub (an issue labeled `factory` runs unattended; @Foreman mentions from owners/members/collaborators run attended) and from Linear Agent Sessions. The orchestrator moves every item through four declared subagent stations in order: **classifier** (triage, fast model) → **analyst** (plan + acceptance criteria, own repo checkout) → **implementer** (codes, verifies, pushes a feature branch from its own checkout) → **reviewer** (independent verdict on the pushed branch, different model vendor, max 2 revision cycles). The orchestrator then opens a draft PR; marking it ready parks on human approval, closing or reopening issues runs as reversible triage, and merging is not in the tool surface. Per-user preferences live in **Vercel Blob**, alongside a shared, per-repo **factory brain** (durable notes about the target repository) under a reserved Blob prefix, readable by every run but writable only by trusted callers, and **handoff artifacts**: long Markdown documents (research memos, analysis detail) that stations pass to each other by id under the reserved `artifacts/` prefix instead of inlining them through the orchestrator. The pipeline lives in `agent/instructions.ts`.
@@ -42,6 +60,16 @@ pnpm validate       # check + typecheck + eve info in one command
 - **Skills** are load-on-demand. A packaged skill (`<name>/SKILL.md`) requires `description` frontmatter; that description is the routing hint. The skills here are `writing-quality`, `triaging-issues`, and `github-linear-bridging`. Skills are per-agent: stations don't see the root's skills.
 - **Evals** live in `evals/` (`defineEval`, one file per case; `evals.config.ts` sets the judge model). Category directories are the failure taxonomy (`routing/`, `safety/`, `pipeline/`); `helpers.ts` carries the shared write-tool list so read-only evals assert deny-by-default (`notCalledTool` over the whole list). Tags: `fast` (cheap loop), `slow`, `needs-connect` (asserts calls that must succeed against real Connect auth), `pipeline` (pushes a real branch; opt-in).
 - After editing, **check LSP diagnostics / `pnpm typecheck`** and fix type errors before moving on.
+
+## Required development skills
+
+Before making code changes, read and follow each applicable skill below, including any referenced guidance needed for the task. These skills are required for work within their scope, not optional suggestions.
+
+- [`architecture-patterns`](.agents/skills/architecture-patterns/SKILL.md): backend architecture, module boundaries, and architectural refactoring.
+- [`javascript-testing-patterns`](.agents/skills/javascript-testing-patterns/SKILL.md): JavaScript and TypeScript tests, testing infrastructure, and test-driven development.
+- [`modern-javascript-patterns`](.agents/skills/modern-javascript-patterns/SKILL.md): JavaScript and TypeScript implementation, refactoring, and modern language patterns.
+- [`nodejs-backend-patterns`](.agents/skills/nodejs-backend-patterns/SKILL.md): Node.js backend services, APIs, middleware, and error handling.
+- [`typescript-advanced-types`](.agents/skills/typescript-advanced-types/SKILL.md): advanced TypeScript types, reusable type utilities, and compile-time type safety.
 
 ## Code style
 
